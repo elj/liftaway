@@ -204,7 +204,6 @@ floor9 = [pygame.mixer.Sound(data_resource_filename("pinball.wav")),   100,     
 floor10 = [pygame.mixer.Sound(data_resource_filename("submarine.wav")),  100,        0]
 floor11 = [pygame.mixer.Sound(data_resource_filename("wharf.wav")),  100,        0]
 
-
 floors = [floor0, floor1, floor2, floor3, floor4, floor5, floor6, floor7, floor8, floor9, floor10,
          floor11]
 
