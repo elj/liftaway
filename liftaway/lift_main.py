@@ -4,7 +4,7 @@
 import RPi.GPIO as GPIO
 import time
 import pygame
-import liftsound
+import liftaway.liftsound as liftsound
 from collections import deque
 
 GPIO.setmode(GPIO.BCM)
@@ -38,27 +38,27 @@ current_floor = -1
 def floor_queue_callback(channel):
     global current_floor
     print("Detected pin", channel)  #debug
-    
+
     #find out which floor number it is
     requested_floor = gpio_to_floors[channel]
     if(requested_floor < 0):
         print("Not a valid floor")
         return
-    
+
     #turn the button light on
     liftsound.floor_button_on(requested_floor)
-    
+
     #determine whether it's the current floor. TODO: Open door?
     #~ if(requested_floor == current_floor):
         #~ print("Not adding current floor")
         #~ time.sleep(0.5)
         #~ liftsound.floor_button_off(requested_floor)
-        
+
     #if it's a different floor, add that floor to the queue
     #else:
     print("[queue] Adding to queue floor", requested_floor) #debug
     q.append(requested_floor)           #add this floor to the queue
-    
+
 #When there are floors in the queue, travel to those floors
 def process_floor_queue():
     global current_floor
@@ -69,9 +69,9 @@ def process_floor_queue():
         return
 
     direction = next_floor-current_floor
-    
+
     current_floor = next_floor
-    
+
     #all the important elevator stuff happens here:
     this_floor = liftsound.go_to_floor(next_floor,direction)
     print("[elev] Doors closed on floor", this_floor)
@@ -95,7 +95,7 @@ def control_cancel_callback(channel):
             time.sleep(0.2)
     current_floor = -1
     GPIO.output(10,GPIO.LOW)
-        
+
 #do all the emergency stuff
 def control_emergency_callback(channel):
     #turn on the emergency button light
@@ -103,11 +103,11 @@ def control_emergency_callback(channel):
     liftsound.start_emergency()
     time.sleep(1)
     #print("Emergency complete")
-        
+
 def control_help_callback(channel):
     print("[control] **Call for help button pressed!**")
     liftsound.play_voicemail()
-        
+
 def control_door_open_callback(channel):
     if(channel != 26):
         return
@@ -130,18 +130,17 @@ def control_door_close_callback(channel):
         time.sleep(0.5)
         GPIO.output(8,GPIO.LOW)
 
-for i in floor_inputs:
-    GPIO.add_event_detect(i, GPIO.RISING, callback=floor_queue_callback, bouncetime=1000)
-    
-GPIO.add_event_detect(23, GPIO.RISING, callback=control_help_callback, bouncetime=15000)
-GPIO.add_event_detect(24, GPIO.RISING, callback=control_door_close_callback, bouncetime=1000)
-GPIO.add_event_detect(25, GPIO.RISING, callback=control_emergency_callback, bouncetime=20000)
-GPIO.add_event_detect(26, GPIO.RISING, callback=control_door_open_callback, bouncetime=1000)
-GPIO.add_event_detect(27, GPIO.RISING, callback=control_cancel_callback, bouncetime=3000)
-
-liftsound.ceiling_light_on()
 
 def main():
+    for i in floor_inputs:
+        GPIO.add_event_detect(i, GPIO.RISING, callback=floor_queue_callback, bouncetime=1000)
+    GPIO.add_event_detect(23, GPIO.RISING, callback=control_help_callback, bouncetime=15000)
+    GPIO.add_event_detect(24, GPIO.RISING, callback=control_door_close_callback, bouncetime=1000)
+    GPIO.add_event_detect(25, GPIO.RISING, callback=control_emergency_callback, bouncetime=20000)
+    GPIO.add_event_detect(26, GPIO.RISING, callback=control_door_open_callback, bouncetime=1000)
+    GPIO.add_event_detect(27, GPIO.RISING, callback=control_cancel_callback, bouncetime=3000)
+    liftsound.ceiling_light_on()
+
     print("ready...")
     try:
         while(True):
