@@ -5,34 +5,11 @@
 import time
 from collections import deque
 
+import liftaway.constants as constants
+import liftaway.leds as leds
 import liftaway.liftsound as liftsound
 import RPi.GPIO as GPIO
 
-
-GPIO.setmode(GPIO.BCM)
-GPIO.cleanup()
-
-floor_inputs = [4, 5, 6, 12, 13, 16, 17, 18, 19, 20, 21, 22]
-control_inputs = [23, 24, 25, 26, 27]
-control_outputs = [7, 8, 9, 10, 11, 14, 15]
-
-GPIO.setup(floor_inputs, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(control_inputs, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(control_outputs, GPIO.OUT)
-
-gpio_to_floors = [-1] * 30
-gpio_to_floors[22] = 0
-gpio_to_floors[4] = 1
-gpio_to_floors[5] = 2
-gpio_to_floors[6] = 3
-gpio_to_floors[12] = 4
-gpio_to_floors[13] = 5
-gpio_to_floors[16] = 6
-gpio_to_floors[17] = 7
-gpio_to_floors[18] = 8
-gpio_to_floors[19] = 9
-gpio_to_floors[20] = 10
-gpio_to_floors[21] = 11
 
 q = deque()
 current_floor = -1
@@ -43,19 +20,19 @@ def floor_queue_callback(channel):
     print("Detected pin", channel)  # debug
 
     # find out which floor number it is
-    requested_floor = gpio_to_floors[channel]
+    requested_floor = constants.gpio_to_floor_mapping.get(channel)
     if requested_floor < 0:
         print("Not a valid floor")
         return
 
     # turn the button light on
-    liftsound.floor_button_on(requested_floor)
+    leds.floor_button_on(requested_floor)
 
     # determine whether it's the current floor. TODO: Open door?
     # ~ if(requested_floor == current_floor):
     # ~ print("Not adding current floor")
     # ~ time.sleep(0.5)
-    # ~ liftsound.floor_button_off(requested_floor)
+    # ~ leds.floor_button_off(requested_floor)
 
     # if it's a different floor, add that floor to the queue
     # else:
@@ -96,7 +73,7 @@ def control_cancel_callback(channel):
         while q:
             f = q.popleft()
             print("[queue] ***removing floor ", f)
-            liftsound.floor_button_off(f)
+            leds.floor_button_off(f)
             time.sleep(0.2)
     current_floor = -1
     GPIO.output(10, GPIO.LOW)
@@ -141,7 +118,15 @@ def control_door_close_callback(channel):
 
 
 def main():
-    for i in floor_inputs:
+    GPIO.setmode(GPIO.BCM)
+    GPIO.cleanup()
+    GPIO.setup(
+        list(constants.gpio_to_floor_mapping.keys()), GPIO.IN, pull_up_down=GPIO.PUD_UP
+    )
+    GPIO.setup(constants.control_inputs, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(constants.control_outputs, GPIO.OUT)
+
+    for i in constants.gpio_to_floor_mapping.keys():
         GPIO.add_event_detect(
             i, GPIO.RISING, callback=floor_queue_callback, bouncetime=1000
         )
@@ -160,7 +145,7 @@ def main():
     GPIO.add_event_detect(
         27, GPIO.RISING, callback=control_cancel_callback, bouncetime=3000
     )
-    liftsound.ceiling_light_on()
+    leds.init()
 
     print("ready...")
     try:
@@ -172,8 +157,8 @@ def main():
                 time.sleep(1)
     except KeyboardInterrupt:
         print("KeyboardInterrupt has been caught.")
-        liftsound.all_lights_off()
-        for i in control_outputs:
+        leds.all_lights_off()
+        for i in constants.control_outputs:
             GPIO.output(i, GPIO.LOW)
         GPIO.cleanup()
 

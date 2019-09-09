@@ -11,6 +11,9 @@ extend-ignore =
     D203,D204,D205,
     # Ignore multi-line docstring summary should start at the first line
     D212,
+    # Temp reduce noise
+    C812,
+    D103,
 import-order-style = edited
 max-complexity = 18
 max-line-length = 80

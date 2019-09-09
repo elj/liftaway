@@ -7,11 +7,9 @@ from __future__ import division, print_function
 import os
 import time
 
-import busio
 import pygame
 import RPi.GPIO as GPIO
-from adafruit_pca9685 import PCA9685
-from board import SCL, SDA
+from liftaway.leds import floor_button_off, floor_button_on
 from pkg_resources import Requirement, resource_filename
 
 ### custom variables for this file ###
@@ -24,19 +22,6 @@ number_of_channels = 8
 
 # set final fadeout time
 exitfade = 1000
-
-# setup adafruit I2C LED controller
-
-i2c_bus = busio.I2C(SCL, SDA)
-pca = PCA9685(i2c_bus)
-pca.frequency = 60
-
-for i in range(0, 15):
-    pca.channels[i].duty_cycle = 0
-
-red = pca.channels[14]
-blue = pca.channels[15]
-green = pca.channels[13]
 
 ### end custom variables ###
 
@@ -60,7 +45,7 @@ def go_to_floor(floor, direction):
     if direction < 0:
         GPIO.output(15, GPIO.HIGH)
     ch6.play(e_travel)
-    # time.sleep(6)		#TODO: randomize this time
+    # time.sleep(6)  #TODO: randomize this time
 
     # try and see if call cancel button has been activated
     while ch6.get_sound() == e_travel:
@@ -95,14 +80,6 @@ def go_to_floor(floor, direction):
     pygame.mixer.music.play(-1)
     time.sleep(1)
     return floor
-
-
-def floor_button_on(floor):
-    pca.channels[floor].duty_cycle = 0xFFFF
-
-
-def floor_button_off(floor):
-    pca.channels[floor].duty_cycle = 0
 
 
 def cancel_call_on(floor):
@@ -151,24 +128,14 @@ def play_voicemail():
     while ch7.get_sound == vm_r:
         time.sleep(0.5)
     while ch7.get_sound == voicemail:
-        pca.channels[12].duty_cycle = 0xFFFF
+        floor_button_on(12)
         time.sleep(0.5)
-        pca.channels[12].duty_cycle = 0
+        floor_button_off(12)
         time.sleep(0)
 
 
 def play_squeak():
     ch7.play(squeak)
-
-
-def ceiling_light_on():
-    red.duty_cycle = 0xFFFF
-    green.duty_cycle = 0x4000
-
-
-def all_lights_off():
-    for i in range(0, 15):
-        pca.channels[i].duty_cycle = 0
 
 
 ### end functions ###
