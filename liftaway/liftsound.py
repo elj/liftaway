@@ -7,9 +7,8 @@ from __future__ import division, print_function
 import os
 import time
 
+import liftaway.low_level as low_level
 import pygame
-import RPi.GPIO as GPIO
-from liftaway.leds import floor_button_off, floor_button_on
 from pkg_resources import Requirement, resource_filename
 
 ### custom variables for this file ###
@@ -40,10 +39,8 @@ def go_to_floor(floor, direction):
     global cancelled
 
     # if direction is positive turn on UP arrow, otherwise DOWN arrow
-    if direction > 0:
-        GPIO.output(14, GPIO.HIGH)
-    if direction < 0:
-        GPIO.output(15, GPIO.HIGH)
+    # Turn on the Direction LED
+    low_level.direction_led(on=True)
     ch6.play(e_travel)
     # time.sleep(6)  #TODO: randomize this time
 
@@ -58,9 +55,8 @@ def go_to_floor(floor, direction):
     # else:
     print("[elev] Arriving...Ding!")
     ding.play()
-    floor_button_off(floor)
-    GPIO.output(14, GPIO.LOW)
-    GPIO.output(15, GPIO.LOW)
+    low_level.floor_button_led(floor, on=False)
+    low_level.direction_led(on=False)
 
     # open door and fade out music
     e_open.play()
@@ -87,7 +83,7 @@ def cancel_call_on(floor):
     cancelled = 1
     if floor < 0:
         return
-    floor_button_off(floor)
+    low_level.floor_button_led(floor, on=False)
     if ch6.get_sound() == e_travel:
         e_stop.play()
         ch6.fadeout(500)
@@ -97,7 +93,7 @@ def cancel_call_on(floor):
 def cancel_call_off():
     global cancelled
     cancelled = 0
-    GPIO.output(10, GPIO.LOW)
+    low_level.cancel_call_led(on=False)
     print("[control] Cancel DEACTIVATED")
 
 
@@ -128,9 +124,9 @@ def play_voicemail():
     while ch7.get_sound == vm_r:
         time.sleep(0.5)
     while ch7.get_sound == voicemail:
-        floor_button_on(12)
+        low_level.floor_button_led(12, on=True)
         time.sleep(0.5)
-        floor_button_off(12)
+        low_level.floor_button_led(12, on=False)
         time.sleep(0)
 
 

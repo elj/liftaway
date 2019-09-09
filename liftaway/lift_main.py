@@ -6,8 +6,8 @@ import time
 from collections import deque
 
 import liftaway.constants as constants
-import liftaway.leds as leds
 import liftaway.liftsound as liftsound
+import liftaway.low_level as low_level
 import RPi.GPIO as GPIO
 
 
@@ -26,13 +26,13 @@ def floor_queue_callback(channel):
         return
 
     # turn the button light on
-    leds.floor_button_on(requested_floor)
+    low_level.floor_button_led(requested_floor, on=True)
 
     # determine whether it's the current floor. TODO: Open door?
     # ~ if(requested_floor == current_floor):
     # ~ print("Not adding current floor")
     # ~ time.sleep(0.5)
-    # ~ leds.floor_button_off(requested_floor)
+    # ~ low_level.floor_button_led(requested_floor, on=False)
 
     # if it's a different floor, add that floor to the queue
     # else:
@@ -64,7 +64,7 @@ def control_cancel_callback(channel):
     if channel != 27:
         return
     # turn on the call cancel button light
-    GPIO.output(10, GPIO.HIGH)
+    low_level.cancel_call_led(on=True)
     print("[queue] **Clearing floor queue!**")
     # TODO: turn off all the floor button lights
     global current_floor
@@ -73,10 +73,10 @@ def control_cancel_callback(channel):
         while q:
             f = q.popleft()
             print("[queue] ***removing floor ", f)
-            leds.floor_button_off(f)
+            low_level.floor_button_led(f, on=False)
             time.sleep(0.2)
     current_floor = -1
-    GPIO.output(10, GPIO.LOW)
+    low_level.cancel_call_led(on=False)
 
 
 # do all the emergency stuff
@@ -98,11 +98,11 @@ def control_door_open_callback(channel):
         return
     else:
         # turn on the door open button light
-        GPIO.output(9, GPIO.HIGH)
+        low_level.door_open_led(on=True)
         print("**Door open button pressed!**")
         liftsound.play_squeak()
         time.sleep(0.5)
-        GPIO.output(9, GPIO.LOW)
+        low_level.door_open_led(on=False)
 
 
 def control_door_close_callback(channel):
@@ -110,11 +110,11 @@ def control_door_close_callback(channel):
         return
     else:
         # turn on the door close button light
-        GPIO.output(8, GPIO.HIGH)
+        low_level.door_close_led(on=True)
         print("[control] **Don't push this button pressed!**")
         liftsound.dont_push_this_button()
         time.sleep(0.5)
-        GPIO.output(8, GPIO.LOW)
+        low_level.door_close_led(on=False)
 
 
 def main():
@@ -128,24 +128,24 @@ def main():
 
     for i in constants.gpio_to_floor_mapping.keys():
         GPIO.add_event_detect(
-            i, GPIO.RISING, callback=floor_queue_callback, bouncetime=1000
+            gpio=i, edge=GPIO.RISING, callback=floor_queue_callback, bouncetime=1000
         )
     GPIO.add_event_detect(
-        23, GPIO.RISING, callback=control_help_callback, bouncetime=15000
+        gpio=23, edge=GPIO.RISING, callback=control_help_callback, bouncetime=15000
     )
     GPIO.add_event_detect(
-        24, GPIO.RISING, callback=control_door_close_callback, bouncetime=1000
+        gpio=24, edge=GPIO.RISING, callback=control_door_close_callback, bouncetime=1000
     )
     GPIO.add_event_detect(
-        25, GPIO.RISING, callback=control_emergency_callback, bouncetime=20000
+        gpio=25, edge=GPIO.RISING, callback=control_emergency_callback, bouncetime=20000
     )
     GPIO.add_event_detect(
-        26, GPIO.RISING, callback=control_door_open_callback, bouncetime=1000
+        gpio=26, edge=GPIO.RISING, callback=control_door_open_callback, bouncetime=1000
     )
     GPIO.add_event_detect(
-        27, GPIO.RISING, callback=control_cancel_callback, bouncetime=3000
+        gpio=27, edge=GPIO.RISING, callback=control_cancel_callback, bouncetime=3000
     )
-    leds.init()
+    low_level.init()
 
     print("ready...")
     try:
@@ -157,7 +157,7 @@ def main():
                 time.sleep(1)
     except KeyboardInterrupt:
         print("KeyboardInterrupt has been caught.")
-        leds.all_lights_off()
+        low_level.all_lights_off()
         for i in constants.control_outputs:
             GPIO.output(i, GPIO.LOW)
         GPIO.cleanup()
