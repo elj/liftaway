@@ -21,4 +21,12 @@ gpio_to_floor_mapping = {
 floor_to_gpio_mapping = {(v, k) for k, v in gpio_to_floor_mapping.items()}
 
 control_inputs = [23, 24, 25, 26, 27]
-control_outputs = [7, 8, 9, 10, 11, 14, 15]
+control_outputs = {
+    "nothing": 7,
+    "door_close": 8,
+    "door_open": 9,
+    "cancel_call": 10,
+    "emergency_call": 11,
+    "direction_up": 14,
+    "direction_dn": 15,
+}

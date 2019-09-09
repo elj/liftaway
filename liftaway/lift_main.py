@@ -124,7 +124,7 @@ def main():
         list(constants.gpio_to_floor_mapping.keys()), GPIO.IN, pull_up_down=GPIO.PUD_UP
     )
     GPIO.setup(constants.control_inputs, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(constants.control_outputs, GPIO.OUT)
+    GPIO.setup(list(constants.control_outputs.values()), GPIO.OUT)
 
     for i in constants.gpio_to_floor_mapping.keys():
         GPIO.add_event_detect(
@@ -158,7 +158,7 @@ def main():
     except KeyboardInterrupt:
         print("KeyboardInterrupt has been caught.")
         low_level.all_lights_off()
-        for i in constants.control_outputs:
+        for i in constants.control_outputs.values():
             GPIO.output(i, GPIO.LOW)
         GPIO.cleanup()
 
