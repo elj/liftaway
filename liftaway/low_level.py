@@ -53,6 +53,7 @@ def direction_led(on: bool = True):
         else:
             gpio_output(control_outputs.get("direction_dn"), on)
     else:
+        # on == False -> Off
         gpio_output(control_outputs.get("direction_up"), on)
         gpio_output(control_outputs.get("direction_dn"), on)
 
