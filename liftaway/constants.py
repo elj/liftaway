@@ -1,11 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Liftaway Constants and Definitions."""
-
-from typing import NamedTuple
-
-
-AudioTrack = NamedTuple("AudioTrack", [("filename", str), ("volume", float)])
 
 # Floor to RPi GPIO Pin Mapping
 floor_to_gpio_mapping = {
@@ -39,39 +34,72 @@ control_outputs = {
 
 # Audio played when a floor floor is active
 floor_audio = {
-    0: (AudioTrack("train.wav", 1.0),),
-    1: (AudioTrack("rocket.wav", 1.0),),
-    2: (AudioTrack("obnoxious_frogs.wav", 1.0),),
-    3: (AudioTrack("Waves.wav", 1.0),),
-    4: (AudioTrack("popcorn.wav", 1.0),),
-    5: (AudioTrack("orchestra.wav", 1.0),),
-    6: (AudioTrack("baseball_2ch.wav", 1.0),),
-    7: (AudioTrack("diner_2ch.wav", 1.0),),
-    8: (AudioTrack("thunderstorm.wav", 1.0),),
-    9: (AudioTrack("pinball.wav", 1.0),),
-    10: (AudioTrack("submarine.wav", 1.0),),
-    11: (AudioTrack("wharf.wav", 1.0),),
+    0: ({"filename": "train.wav"},),
+    1: ({"filename": "rocket.wav"},),
+    2: ({"filename": "obnoxious_frogs.wav"},),
+    3: ({"filename": "Waves.wav"},),
+    4: ({"filename": "popcorn.wav"},),
+    5: ({"filename": "orchestra.wav"},),
+    6: ({"filename": "baseball_2ch.wav"},),
+    7: ({"filename": "diner_2ch.wav"},),
+    8: ({"filename": "thunderstorm.wav"},),
+    9: ({"filename": "pinball.wav"},),
+    10: ({"filename": "submarine.wav"},),
+    11: ({"filename": "wharf.wav"},),
 }
 
 # Audio played in-between floor audio
 in_between_audio = {
-    "ding": AudioTrack("lift_ding.wav", 1.0),
-    "open": AudioTrack("elevator_open.wav", 1.0),
-    "close": AudioTrack("elevator_close2.wav", 1.0),
-    "travel": AudioTrack("elevator_travel.wav", 1.0),
-    "halt": AudioTrack("elevator_stop.wav", 1.0),
-    "emer": AudioTrack("emergency.wav", 0.8),
+    "ding": {"filename": "lift_ding.wav"},
+    "open": {"filename": "elevator_open.wav"},
+    "close": {"filename": "elevator_close2.wav"},
+    "travel": {"filename": "elevator_travel.wav", "audio_channel": "movement"},
+    "halt": {"filename": "elevator_stop.wav", "audio_channel": "movement"},
 }
 
-letter_a_button_audio = (
-    AudioTrack("voice_button_different.wav", 0.8),
-    AudioTrack("voice_button_dontpress.wav", 0.8),
-    AudioTrack("voice_button_mad.wav", 0.8),
-    AudioTrack("voice_button_notlike.wav", 0.8),
-    AudioTrack("voice_button_notpressing.wav", 0.8),
-    AudioTrack("voice_button_outofservice.wav", 0.8),
-    AudioTrack("voice_button_stop.wav", 0.8),
-    AudioTrack("voice_button_sure.wav", 0.8),
+no_press_button_audio = (
+    {
+        "filename": "voice_button_different.wav",
+        "volume": 0.8,
+        "audio_channel": "no_press",
+    },
+    {
+        "filename": "voice_button_dontpress.wav",
+        "volume": 0.8,
+        "audio_channel": "no_press",
+    },
+    {"filename": "voice_button_mad.wav", "volume": 0.8, "audio_channel": "no_press"},
+    {
+        "filename": "voice_button_notlike.wav",
+        "volume": 0.8,
+        "audio_channel": "no_press",
+    },
+    {
+        "filename": "voice_button_notpressing.wav",
+        "volume": 0.8,
+        "audio_channel": "no_press",
+    },
+    {
+        "filename": "voice_button_outofservice.wav",
+        "volume": 0.8,
+        "audio_channel": "no_press",
+    },
+    {"filename": "voice_button_stop.wav", "volume": 0.8, "audio_channel": "no_press"},
+    {"filename": "voice_button_sure.wav", "volume": 0.8, "audio_channel": "no_press"},
 )
 
-letter_d_button_audio = (AudioTrack("squeak1.wav", 0.3),)
+voicemail_button_intro = (
+    {"filename": "voice_vm_ringing.wav", "volume": 0.7, "audio_channel": "voicemail"},
+)
+
+voicemail_button_audio = tuple(
+    {"filename": "voice_vm_dutch.wav", "volume": 0.6, "audio_channel": "voicemail"}
+)
+
+emergency_button_audio = tuple(
+    {"filename": "emergency.wav", "volume": 0.8, "audio_channel": "emergency"}
+)
+
+squeaker_button_audio = tuple(
+    {"filename": "squeak2.wav", "volume": 0.3, "audio_channel": "squeaker"}
+)

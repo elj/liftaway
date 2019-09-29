@@ -4,12 +4,11 @@
 
 from __future__ import division, print_function
 
-import os
 import time
 
 import liftaway.low_level as low_level
 import pygame
-from pkg_resources import Requirement, resource_filename
+from liftaway.util import data_resource_filename
 
 ### custom variables for this file ###
 
@@ -25,13 +24,6 @@ exitfade = 1000
 ### end custom variables ###
 
 ### functions and stuff go here ###
-
-
-def data_resource_filename(filename):
-    """Return the filename of a data resource."""
-    return resource_filename(
-        Requirement.parse("liftaway"), os.path.join("liftaway/data", filename)
-    )
 
 
 def go_to_floor(floor, direction):

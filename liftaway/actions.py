@@ -3,22 +3,13 @@
 """Liftaway floor (and betwen floor) objects."""
 
 import logging
-import os
+import random
 import time
 
 import liftaway.low_level
-import pygame
 from liftaway.constants import floor_audio, in_between_audio
-from pkg_resources import Requirement, resource_filename
 
 logger = logging.getLogger(__name__)
-
-
-def data_resource_filename(filename):
-    """Return the filename of a data resource."""
-    return resource_filename(
-        Requirement.parse("liftaway"), os.path.join("liftaway/data", filename)
-    )
 
 
 class Base:
@@ -42,14 +33,20 @@ class Movement(Base):
 
     def __init__(self):
         """initializer."""
-        self._travel = pygame.mixer.Sound(
-            data_resource_filename(in_between_audio.get("travel").filename)
-        )
-        self._travel.set_volume(in_between_audio.get("travel").volume)
-        self._halt = pygame.mixer.Sound(
-            data_resource_filename(in_between_audio.get("halt").filename)
-        )
-        self._halt.set_volume(in_between_audio.get("halt").volume)
+        self._travel = in_between_audio.get("travel")
+        self._halt = in_between_audio.get("halt")
+
+    def halt(self):
+        """We've halted mid-travel."""
+        logger.info(f"Movement: Elevator Halted!")
+        self._halt.play(interrupt=True)
+        self._halt.fadeout(fadeout_ms=500)
+
+    def travel(self):
+        """We're traveling between floors."""
+        logger.info(f"Movement: Elevator Traveling")
+        liftaway.low_level.direction_led(on=True)
+        self._travel.play(blocking=True)
 
     def push(self):
         """Between Floor dealie gets pushed onto the queue."""
@@ -59,19 +56,17 @@ class Movement(Base):
         """Movement gets popped off the queue."""
         logger.info(f"Movement: Popped off queue; Interrupted({interrupted})")
         if not interrupted:
-            logger.info(f"Movement: Elevator Traveling")
-            liftaway.low_level.direction_led(on=True)
-            self._travel.play()
-            time.sleep(1.5)
+            self.travel()
+            # Randomize the travel time from 2 to 7 seconds
+            time.sleep(random.choice(tuple(range(2, 8))))  # noqa
         else:
             # Take some time to dequeue the floors
             time.sleep(0.5)
 
     def interrupt(self):
         """Movement gets interrupted... stop audio and play screech."""
-        logger.info(f"Movement: Elevator Stopped!")
-        self._halt.play()
-        self._travel.stop()
+        logger.info(f"Movement: Interrupted")
+        self.halt()
 
 
 class Floor(Base):
@@ -82,26 +77,23 @@ class Floor(Base):
         self.floor_number = floor_number
         audios = []
         for f in floor_audio.get(floor_number):
-            audios.append(pygame.mixer.Sound(data_resource_filename(f.filename)))
-        self.audios = tuple(audios)
-        self.audios_i = 0
-        self._ding = pygame.mixer.Sound(
-            data_resource_filename(in_between_audio.get("ding").filename)
-        )
-        self._ding.set_volume(in_between_audio.get("ding").volume)
-        self._open = pygame.mixer.Sound(
-            data_resource_filename(in_between_audio.get("open").filename)
-        )
-        self._open.set_volume(in_between_audio.get("open").volume)
-        self._close = pygame.mixer.Sound(
-            data_resource_filename(in_between_audio.get("close").filename)
-        )
-        self._close.set_volume(in_between_audio.get("close").volume)
+            audios.append(f)
+        self._audios = tuple(audios)
+        self._audios_i = 0
+        self._ding = in_between_audio.get("ding")
+        self._open = in_between_audio.get("open")
+        self._close = in_between_audio.get("close")
+        self._queued = False
+
+    @property
+    def is_queued(self):
+        """Object thinks it's queued or not."""
+        return self._queued
 
     def ding(self):
         """Ding!."""
         logger.info(f"Floor({self.floor_number}): Ding!")
-        self._ding.play()
+        self._ding.play(blocking=True)
 
     def no_direction(self):
         """Kill direction lights."""
@@ -111,8 +103,7 @@ class Floor(Base):
     def door_open(self):
         """Door opened!."""
         logger.info(f"Floor({self.floor_number}): Opening Door")
-        self._open.play()
-        time.sleep(1.5)
+        self._open.play(blocking=True)
 
     def floor_sounds(self):
         """We've arrived."""
@@ -121,17 +112,18 @@ class Floor(Base):
         self.audios[self.audios_i].play()
         # hold the doors open to hear the sounds
         time.sleep(15)
+        self.audios[self.audios_i].fadeout(1700)
 
     def door_close(self):
         """Door closed!."""
         logger.info(f"Floor({self.floor_number}): Closing Door")
         self._close.play()
-        self.audios[self.audios_i].fadeout(1700)
 
     def push(self):
         """Floor gets pushed onto the queue."""
         logger.info(f"Floor({self.floor_number}): Pushed onto queue")
         liftaway.low_level.floor_button_led(self.floor_number, on=True)
+        self._queued = True
 
     def pop(self, interrupted: bool = False):
         """Floor gets popped off the queue."""
@@ -145,7 +137,9 @@ class Floor(Base):
             self.door_open()
             self.floor_sounds()
             self.door_close()
+        self._queued = False
 
     def interrupt(self):
         """Floor gets interrupted... noop for floors."""
+        logger.info(f"Floor({self.floor_number}): Interrupted")
         pass
