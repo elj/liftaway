@@ -25,42 +25,29 @@ audio_channels = {
 class Music:
     """Music Track abstraction."""
 
-    def __init__(self, filename: str, fade_ms: int = 0, volume: float = 1.0):
+    def __init__(self, filename: str, volume: float = 1.0):
         """Initializer."""
-        logger.debug(f"Init Music {filename}, fade_ms:{fade_ms}, volume:{volume}")
+        logger.debug(f"Init Music {filename}, volume:{volume}")
         self._filename = filename
         self._music = pygame.mixer.music
         self._music.load(data_resource_filename(filename))
+        self.volume = volume
         self._music.set_volume(volume)
-        self._fade_ms = fade_ms
+        self._music.play()
 
-    def fadein(self, fadein_ms: int = 0, loop: int = -1):
-        """
-        Fade in music.
-        :param fadein_ms: milliseconds to fade in.
-        :param loop: number of loops to play.
-        """
-        ms = fadein_ms or self._fade_ms
-        logger.debug(f"Fadein Music {self.filename}, fadein_ms:{ms}, loop:{loop}")
-        # TODO(tkalus) Fix when moved to py-sdl2; not available in pygame
-        self._music.play(loop)
+    def fadein(self):
+        """Fade in music."""
+        logger.debug(f"Fadein Music {self.filename}")
+        for i in range(1, 11):
+            self._music.set_volume(round((self.volume * i / 10), 2))
+            time.sleep(0.1)
 
     def fadeout(self, fadeout_ms: int = 0):
-        """
-        Fade out music.
-        :param fadeout_ms: milliseconds to fade out.
-        """
-        ms = fadeout_ms or self._fade_ms
-        logger.debug(f"Fadeout Music {self.filename}, fadeout_ms:{ms}")
-        self._music.fadeout(ms)
-
-    def play(self, loop: int = -1):
-        """
-        Fade out music.
-        :param loop: number of loops to play.
-        """
-        logger.debug(f"Play Music {self.filename}, loop:{loop}")
-        self._music.play(loop)
+        """Fade out music."""
+        logger.debug(f"Fadeout Music {self.filename}")
+        for i in range(10, -1, -1):
+            self._music.set_volume(round((self.volume * i / 10), 2))
+            time.sleep(0.1)
 
 
 class Sound:
@@ -88,9 +75,9 @@ class Sound:
         """Fully qualified data pathname."""
         return data_resource_filename(self._filename)
 
-    def fadein(self, fadein_ms: int = 0, loop: int = -1):
+    def fadein(self, fadein_ms: int = 0, loop: int = 0):
         """
-        Fade in music.
+        Fadein Sound.
         :param fadein_ms: milliseconds to fade in.
         :param loop: number of loops to play.
         """

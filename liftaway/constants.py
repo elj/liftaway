@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Liftaway Constants and Definitions."""
 
-# Floor to RPi GPIO Pin Mapping
+# Floor to RPi GPIO Input Pin Mapping
 floor_to_gpio_mapping = {
     0: 22,
     1: 4,
@@ -21,7 +21,7 @@ gpio_to_floor_mapping = {v: k for k, v in floor_to_gpio_mapping.items()}
 
 control_inputs = [23, 24, 25, 26, 27]
 
-# RPi GPIO output to pin mappings
+# RPi GPIO output pin to led mappings
 control_outputs = {
     "nothing": 7,
     "door_close": 8,
@@ -50,6 +50,7 @@ floor_audio = {
 
 # Audio played in-between floor audio
 in_between_audio = {
+    "muzak": {"filename": "muzak.wav"},
     "ding": {"filename": "lift_ding.wav"},
     "open": {"filename": "elevator_open.wav"},
     "close": {"filename": "elevator_close2.wav"},
@@ -57,6 +58,26 @@ in_between_audio = {
     "halt": {"filename": "elevator_stop.wav", "audio_channel": "movement"},
 }
 
+# Button A
+voicemail_button_intro = (
+    {"filename": "voice_vm_ringing.wav", "volume": 0.7, "audio_channel": "voicemail"},
+)
+
+voicemail_button_audio = tuple(
+    {"filename": "voice_vm_dutch.wav", "volume": 0.6, "audio_channel": "voicemail"}
+)
+
+# Button B
+squeaker_button_audio = tuple(
+    {"filename": "squeak2.wav", "volume": 0.3, "audio_channel": "squeaker"}
+)
+
+# Button C
+emergency_button_audio = tuple(
+    {"filename": "emergency.wav", "volume": 0.8, "audio_channel": "emergency"}
+)
+
+# Button D
 no_press_button_audio = (
     {
         "filename": "voice_button_different.wav",
@@ -86,20 +107,4 @@ no_press_button_audio = (
     },
     {"filename": "voice_button_stop.wav", "volume": 0.8, "audio_channel": "no_press"},
     {"filename": "voice_button_sure.wav", "volume": 0.8, "audio_channel": "no_press"},
-)
-
-voicemail_button_intro = (
-    {"filename": "voice_vm_ringing.wav", "volume": 0.7, "audio_channel": "voicemail"},
-)
-
-voicemail_button_audio = tuple(
-    {"filename": "voice_vm_dutch.wav", "volume": 0.6, "audio_channel": "voicemail"}
-)
-
-emergency_button_audio = tuple(
-    {"filename": "emergency.wav", "volume": 0.8, "audio_channel": "emergency"}
-)
-
-squeaker_button_audio = tuple(
-    {"filename": "squeak2.wav", "volume": 0.3, "audio_channel": "squeaker"}
 )

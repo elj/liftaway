@@ -7,6 +7,7 @@ import random
 import time
 
 import liftaway.low_level
+from liftaway.audio import Sound
 from liftaway.constants import floor_audio, in_between_audio
 
 logger = logging.getLogger(__name__)
@@ -33,8 +34,8 @@ class Movement(Base):
 
     def __init__(self):
         """initializer."""
-        self._travel = in_between_audio.get("travel")
-        self._halt = in_between_audio.get("halt")
+        self._travel = Sound(**in_between_audio.get("travel", {}))
+        self._halt = Sound(**in_between_audio.get("halt", {}))
 
     def halt(self):
         """We've halted mid-travel."""
@@ -76,13 +77,14 @@ class Floor(Base):
         """initilizer."""
         self.floor_number = floor_number
         audios = []
-        for f in floor_audio.get(floor_number):
-            audios.append(f)
+        for f in floor_audio.get(floor_number, {}):
+            audios.append(Sound(**f))
         self._audios = tuple(audios)
         self._audios_i = 0
-        self._ding = in_between_audio.get("ding")
-        self._open = in_between_audio.get("open")
-        self._close = in_between_audio.get("close")
+        self._ding = Sound(**in_between_audio.get("ding"))
+        self._open = Sound(**in_between_audio.get("open"))
+        self._close = Sound(**in_between_audio.get("close"))
+        self._muzak = Sound(**in_between_audio.get("muzak"))
         self._queued = False
 
     @property
@@ -113,11 +115,17 @@ class Floor(Base):
         # hold the doors open to hear the sounds
         time.sleep(15)
         self.audios[self.audios_i].fadeout(1700)
+        time.sleep(1)
 
     def door_close(self):
         """Door closed!."""
         logger.info(f"Floor({self.floor_number}): Closing Door")
         self._close.play()
+
+    def muzak(self):
+        """Muzak!."""
+        logger.info(f"Floor({self.floor_number}): Muzak")
+        self._muzak.play(fadein_ms=1000, loop=-1)
 
     def push(self):
         """Floor gets pushed onto the queue."""
@@ -137,6 +145,7 @@ class Floor(Base):
             self.door_open()
             self.floor_sounds()
             self.door_close()
+            self.muzak()
         self._queued = False
 
     def interrupt(self):
