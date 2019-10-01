@@ -33,7 +33,7 @@ class Controller:
 
     def __init__(self):
         """Initializer."""
-        self.gpio_inputs = tuple(
+        self.gpio_inputs = tuple([
             GPIOInput(gpio=4, bouncetime=1000, callback=partial(self.floor, 1)),
             GPIOInput(gpio=5, bouncetime=1000, callback=partial(self.floor, 2)),
             GPIOInput(gpio=6, bouncetime=1000, callback=partial(self.floor, 3)),
@@ -46,12 +46,12 @@ class Controller:
             GPIOInput(gpio=20, bouncetime=1000, callback=partial(self.floor, 10)),
             GPIOInput(gpio=21, bouncetime=1000, callback=partial(self.floor, 11)),
             GPIOInput(gpio=22, bouncetime=1000, callback=partial(self.floor, 0)),
-            GPIOInput(gpio=23, bouncetime=15000, callback=partial(self.voicemail, 0)),
-            GPIOInput(gpio=26, bouncetime=1000, callback=partial(self.squeaker, 0)),
-            GPIOInput(gpio=25, bouncetime=20000, callback=partial(self.emergency, 0)),
-            GPIOInput(gpio=24, bouncetime=1000, callback=partial(self.no_press, 0)),
+            GPIOInput(gpio=23, bouncetime=1000, callback=partial(self.voicemail, 0)),
+            GPIOInput(gpio=26, bouncetime=400, callback=partial(self.squeaker, 0)),
+            GPIOInput(gpio=25, bouncetime=1000, callback=partial(self.emergency, 0)),
+            GPIOInput(gpio=24, bouncetime=500, callback=partial(self.no_press, 0)),
             GPIOInput(gpio=27, bouncetime=3000, callback=partial(self.cancel, 0)),
-        )
+        ])
         # self.gpio_outputs = list([
         #     GPIOOutput(gpio=7, label="nothing"),
         #     GPIOOutput(gpio=8, label="door_close"),
@@ -61,9 +61,9 @@ class Controller:
         #     GPIOOutput(gpio=14, label="direction_up"),
         #     GPIOOutput(gpio=15, label="direction_dn"),
         # ])
-        self.gpio_outputs = tuple(
+        self.gpio_outputs = tuple([
             GPIOOutput(gpio=v, label=k) for k, v in constants.control_outputs.items()
-        )
+        ])
         self.movement = Movement()
         self.muzak = Music(**constants.in_between_audio.get("muzak"))
         floor_count = 12
@@ -72,16 +72,16 @@ class Controller:
         self.lock = Lock()
         self.queue = deque()
         self._emergency = Flavour(
-            constants.emergency_button_audio, self_interruptable=False
+            sounds=constants.emergency_button_audio, self_interruptable=False
         )
         self._voicemail = Flavour(
-            constants.voicemail_button_audio, self_interruptable=False
+            sounds=constants.voicemail_button_audio, self_interruptable=False
         )
         self._no_press = Flavour(
-            constants.no_press_button_audio, self_interruptable=True
+            sounds=constants.no_press_button_audio, self_interruptable=True
         )
         self._squeaker = Flavour(
-            constants.squeaker_button_audio, self_interruptable=True
+            sounds=constants.squeaker_button_audio, self_interruptable=True
         )
         self.running = False
         self.gpio_init()
@@ -138,6 +138,7 @@ class Controller:
 
     def floor(self, requested_floor: int, gpio: int) -> None:
         """Run Handler for Floor GPIO."""
+        logger.debug(f"floor_gpio({gpio})")
         if requested_floor >= len(self.floors):
             logger.error(f"requested_floor({requested_floor}) out of range")
             return
@@ -147,21 +148,25 @@ class Controller:
 
     def voicemail(self, _: int, gpio: int) -> None:
         """Run Call for Help Routine."""
+        logger.debug(f"voicemail({gpio})")
         self._voicemail.run()
         pass
 
     def squeaker(self, _: int, gpio: int) -> None:
         """Run Squeaker Routine."""
+        logger.debug(f"squeaker({gpio})")
         self._squeaker.run()
         pass
 
     def emergency(self, _: int, gpio: int) -> None:
         """Run Emergency/Remain Calm Routine."""
+        logger.debug(f"emergency({gpio})")
         self._emergency.run()
         pass
 
     def no_press(self, _: int, gpio: int) -> None:
         """Run Don't Press This Button Routine."""
+        logger.debug(f"no_press({gpio})")
         self._no_press.run()
         pass
 
@@ -171,7 +176,7 @@ class Controller:
 
         Dequeue's all selected motions and floors without playing them.
         """
-        pass
+        logger.debug(f"cancel({gpio})")
 
     def run(self) -> None:
         """Run Controller."""

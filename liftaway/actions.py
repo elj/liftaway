@@ -5,7 +5,7 @@
 import logging
 import time
 from threading import BoundedSemaphore, Semaphore
-from typing import Dict, Union
+from typing import Dict, Tuple, Union
 
 import liftaway.low_level
 from liftaway.audio import Music, Sound
@@ -158,14 +158,10 @@ class Flavour:
     """Somebody call Guy Fieri!."""
 
     def __init__(
-        self, sounds: Dict[str, Union[str, float]], self_interruptable: bool = True
+        self, sounds: Tuple[Dict[str, Union[str, float]]], self_interruptable: bool = True
     ):
         """Initialize."""
         self.irqable = self_interruptable
-        if self.irqable:
-            self.sem = Semaphore(500)
-        else:
-            self.sem = BoundedSemaphore(1)
         audios = []
         for f in sounds:
             audios.append(Sound(**f))
@@ -174,11 +170,9 @@ class Flavour:
 
     def run(self):
         """Welcome to Flavourtown."""
-        if not self.sem.acquire(blocking=False):
+        if not self.irqable and self._audios[self._audios_i].is_busy:
             logger.error(f"Flavour: Already playing audio")
             return
         self._audios_i = (self._audios_i + 1) % len(self._audios)
         logger.info(f"Flavour: Playing audio({self._audios_i})")
-        blocking = not self.irqable
-        self._audios[self._audios_i].play(blocking=blocking)
-        self.sem.release()
+        self._audios[self._audios_i].play(blocking=False)

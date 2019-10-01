@@ -121,6 +121,11 @@ class Sound:
         """Fully qualified data pathname."""
         return data_resource_filename(self._filename)
 
+    @property
+    def is_busy(self) -> bool:
+        """Boolean saying whether the channel is busy."""
+        return self._channel.get_busy()
+
     def fadein(self, fadein_ms: int = 0, loop: int = 0):
         """
         Fadein Sound.
@@ -146,7 +151,7 @@ class Sound:
         :param blocking: block until playing sound is finished.
         :param fadein_ms: millisecond fadein.
         """
-        busy = self._channel.get_busy()
+        busy = self.is_busy
         logger.info(
             f"Play Sound {self.filename} on channel:{self._channel_num}, fadein:{fadein_ms}"
         )

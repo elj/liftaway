@@ -59,19 +59,19 @@ in_between_audio = {
 }
 
 # Button A - Call for Help
-voicemail_button_audio = tuple(
+voicemail_button_audio = tuple([
     {"filename": "voice_vm_dutch.wav", "volume": 0.6, "audio_channel": "voicemail"}
-)
+])
 
 # Button B - Door Open
-squeaker_button_audio = tuple(
+squeaker_button_audio = tuple([
     {"filename": "squeak2.wav", "volume": 0.3, "audio_channel": "squeaker"}
-)
+])
 
 # Button C - Emergency
-emergency_button_audio = tuple(
+emergency_button_audio = tuple([
     {"filename": "emergency.wav", "volume": 0.8, "audio_channel": "emergency"}
-)
+])
 
 # Button D - Door Close
 no_press_button_audio = (
