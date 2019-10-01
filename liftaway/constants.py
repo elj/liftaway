@@ -50,15 +50,15 @@ floor_audio = {
 
 # Audio played in-between floor audio
 in_between_audio = {
-    "muzak": {"filename": "muzak.wav"},
+    "muzak": {"filename": "muzak.wav", "volume": 0.5},
     "ding": {"filename": "lift_ding.wav"},
     "open": {"filename": "elevator_open.wav"},
-    "close": {"filename": "elevator_close2.wav"},
+    "close": {"filename": "elevator_close.wav"},
     "travel": {"filename": "elevator_travel.wav", "audio_channel": "movement"},
     "halt": {"filename": "elevator_stop.wav", "audio_channel": "movement"},
 }
 
-# Button A
+# Button A - Call for Help
 voicemail_button_intro = (
     {"filename": "voice_vm_ringing.wav", "volume": 0.7, "audio_channel": "voicemail"},
 )
@@ -67,17 +67,17 @@ voicemail_button_audio = tuple(
     {"filename": "voice_vm_dutch.wav", "volume": 0.6, "audio_channel": "voicemail"}
 )
 
-# Button B
+# Button B - Door Open
 squeaker_button_audio = tuple(
     {"filename": "squeak2.wav", "volume": 0.3, "audio_channel": "squeaker"}
 )
 
-# Button C
+# Button C - Emergency
 emergency_button_audio = tuple(
     {"filename": "emergency.wav", "volume": 0.8, "audio_channel": "emergency"}
 )
 
-# Button D
+# Button D - Door Close
 no_press_button_audio = (
     {
         "filename": "voice_button_different.wav",

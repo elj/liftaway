@@ -30,24 +30,66 @@ class Music:
         logger.debug(f"Init Music {filename}, volume:{volume}")
         self._filename = filename
         self._music = pygame.mixer.music
-        self._music.load(data_resource_filename(filename))
         self.volume = volume
-        self._music.set_volume(volume)
-        self._music.play()
+        if not self._music.get_busy():
+            self._music.load(data_resource_filename(filename))
+            self._music.set_volume(volume)
+            self._music.play(loops=-1)
+
+    @property
+    def filename(self):
+        """Fully qualified data pathname."""
+        return data_resource_filename(self._filename)
 
     def fadein(self):
-        """Fade in music."""
+        """
+        Fade in music.
+
+        Returns False if not already Playing.
+        """
+        if not self._music.get_busy():
+            logger.error(f"Fadein Music {self.filename} not playing")
+            return False
+        s_vol = self._music.get_volume()
+        e_vol = self.volume
+        if s_vol == e_vol:
+            return True
         logger.debug(f"Fadein Music {self.filename}")
         for i in range(1, 11):
-            self._music.set_volume(round((self.volume * i / 10), 2))
-            time.sleep(0.1)
+            vol = ((e_vol - s_vol) * i / 10) + s_vol
+            self._music.set_volume(round(vol, 2))
+            time.sleep(0.2)
+        return True
 
     def fadeout(self, fadeout_ms: int = 0):
         """Fade out music."""
         logger.debug(f"Fadeout Music {self.filename}")
+        s_vol = self._music.get_volume()
         for i in range(10, -1, -1):
-            self._music.set_volume(round((self.volume * i / 10), 2))
+            vol = ((s_vol) * i / 10)
+            self._music.set_volume(round(vol, 2))
             time.sleep(0.1)
+
+    def play(self):
+        """Play Music."""
+        if not self._music.get_busy():
+            logger.debug(f"Play Music {self.filename}")
+            self._music.set_volume(self.volume)
+            self._music.play(loops=-1)
+            return True
+        else:
+            # already playing; fadein
+            return False
+
+    def stop(self):
+        """Stop Music."""
+        if self._music.get_busy():
+            self._music.stop()
+
+    def zero(self):
+        logger.debug(f"Kill Music {self.filename}")
+        self._music.set_volume(0)
+
 
 
 class Sound:
@@ -63,7 +105,11 @@ class Sound:
         audio_channel: str = "default",
     ):
         """Initializer."""
+        logger.debug(f"Init Sound {filename}, volume:{volume}")
         self._filename = filename
+        self._loops = loops
+        self._maxtime = maxtime
+        self._fade_ms = fade_ms
         self._sound = pygame.mixer.Sound(data_resource_filename(filename))
         self._sound.set_volume(volume)
         self._channel_num = audio_channels[audio_channel]  # KeyError Exception

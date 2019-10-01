@@ -140,7 +140,7 @@ ch6 = pygame.mixer.Channel(6)
 button_cycle = 0
 
 # look for sound & music files in subfolder 'data'
-pygame.mixer.music.load(data_resource_filename("muzak.wav"))  # load music
+# pygame.mixer.music.load(data_resource_filename("muzak.wav"))  # load music
 ding = pygame.mixer.Sound(data_resource_filename("lift_ding.wav"))
 e_travel = pygame.mixer.Sound(data_resource_filename("elevator_travel.wav"))
 e_open = pygame.mixer.Sound(data_resource_filename("elevator_open.wav"))
@@ -152,8 +152,8 @@ e_emer.set_volume(0.8)
 squeak.set_volume(0.3)
 
 
-pygame.mixer.music.set_volume(0.5)
-pygame.mixer.music.play(-1)
+# pygame.mixer.music.set_volume(0.5)
+# pygame.mixer.music.play(-1)
 
 # LOAD FLOOR SOUNDS HERE
 
