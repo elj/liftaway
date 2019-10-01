@@ -198,53 +198,8 @@ class Controller:
 
 
 q = deque()
-current_floor = -1
 
 
-def floor_queue_callback(channel):
-    global current_floor
-    print("Detected pin", channel)  # debug
-
-    # find out which floor number it is
-    requested_floor = constants.gpio_to_floor_mapping.get(channel)
-    if requested_floor < 0:
-        print("Not a valid floor")
-        return
-
-    # turn the button light on
-    low_level.floor_button_led(requested_floor, on=True)
-
-    # determine whether it's the current floor. TODO: Open door?
-    # ~ if(requested_floor == current_floor):
-    # ~ print("Not adding current floor")
-    # ~ time.sleep(0.5)
-    # ~ low_level.floor_button_led(requested_floor, on=False)
-
-    # if it's a different floor, add that floor to the queue
-    # else:
-    print("[queue] Adding to queue floor", requested_floor)  # debug
-    q.append(requested_floor)  # add this floor to the queue
-
-
-# When there are floors in the queue, travel to those floors
-def process_floor_queue():
-    global current_floor
-    print("[queue] Processing queue...")
-    next_floor = q.popleft()
-    if next_floor == current_floor:
-        print("Skipping redundant floor")
-        return
-
-    direction = next_floor - current_floor
-
-    current_floor = next_floor
-
-    # all the important elevator stuff happens here:
-    this_floor = liftsound.go_to_floor(next_floor, direction)
-    print("[elev] Doors closed on floor", this_floor)
-
-
-# stop elevator and clear the queue
 def control_cancel_callback(channel):
     global current_floor
     if channel != 27:
@@ -265,55 +220,20 @@ def control_cancel_callback(channel):
     low_level.cancel_call_led(on=False)
 
 
-# do all the emergency stuff
-def control_emergency_callback(channel):
-    # turn on the emergency button light
-    print("[control] **Emergency button pressed!**")
-    liftsound.start_emergency()
-    time.sleep(1)
-    # print("Emergency complete")
-
-
-def control_help_callback(channel):
-    print("[control] **Call for help button pressed!**")
-    liftsound.play_voicemail()
-
-
-def control_door_open_callback(channel):
-    if channel != 26:
-        return
-    else:
-        # turn on the door open button light
-        low_level.door_open_led(on=True)
-        print("**Door open button pressed!**")
-        liftsound.play_squeak()
-        time.sleep(0.5)
-        low_level.door_open_led(on=False)
-
-
-def control_door_close_callback(channel):
-    if channel != 24:
-        return
-    else:
-        # turn on the door close button light
-        low_level.door_close_led(on=True)
-        print("[control] **Don't push this button pressed!**")
-        liftsound.dont_push_this_button()
-        time.sleep(0.5)
-        low_level.door_close_led(on=False)
-
-
 def main():
     logging.basicConfig(
         level=logging.DEBUG,
         stream=sys.stdout,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
+
+    # Debug
     floors = list(range(12))
     for _ in range(2):
         f = random.choice(floors)  # noqa
         floors.remove(f)
-        controller.floor(f)
+        controller.floor(f, 4)
+
     try:
         controller.run()
     except KeyboardInterrupt:
