@@ -3,7 +3,6 @@
 """Liftaway main business logic."""
 
 import logging
-import queue
 import random
 import sys
 import time
@@ -16,7 +15,7 @@ import liftaway.constants as constants
 import liftaway.liftsound as liftsound
 import liftaway.low_level as low_level
 import RPi.GPIO as GPIO
-from liftaway.actions import Floor, Movement
+from liftaway.actions import Flavour, Floor, Movement
 from liftaway.audio import Music
 
 
@@ -34,7 +33,7 @@ class Controller:
 
     def __init__(self):
         """Initializer."""
-        self.gpio_inputs = tuple([
+        self.gpio_inputs = tuple(
             GPIOInput(gpio=4, bouncetime=1000, callback=partial(self.floor, 1)),
             GPIOInput(gpio=5, bouncetime=1000, callback=partial(self.floor, 2)),
             GPIOInput(gpio=6, bouncetime=1000, callback=partial(self.floor, 3)),
@@ -47,12 +46,12 @@ class Controller:
             GPIOInput(gpio=20, bouncetime=1000, callback=partial(self.floor, 10)),
             GPIOInput(gpio=21, bouncetime=1000, callback=partial(self.floor, 11)),
             GPIOInput(gpio=22, bouncetime=1000, callback=partial(self.floor, 0)),
-            GPIOInput(gpio=23, bouncetime=15000, callback=partial(self.call_help, 0)),
+            GPIOInput(gpio=23, bouncetime=15000, callback=partial(self.voicemail, 0)),
             GPIOInput(gpio=26, bouncetime=1000, callback=partial(self.squeaker, 0)),
             GPIOInput(gpio=25, bouncetime=20000, callback=partial(self.emergency, 0)),
             GPIOInput(gpio=24, bouncetime=1000, callback=partial(self.no_press, 0)),
             GPIOInput(gpio=27, bouncetime=3000, callback=partial(self.cancel, 0)),
-        ])
+        )
         # self.gpio_outputs = list([
         #     GPIOOutput(gpio=7, label="nothing"),
         #     GPIOOutput(gpio=8, label="door_close"),
@@ -62,9 +61,9 @@ class Controller:
         #     GPIOOutput(gpio=14, label="direction_up"),
         #     GPIOOutput(gpio=15, label="direction_dn"),
         # ])
-        self.gpio_outputs = tuple([
+        self.gpio_outputs = tuple(
             GPIOOutput(gpio=v, label=k) for k, v in constants.control_outputs.items()
-        ])
+        )
         self.movement = Movement()
         self.muzak = Music(**constants.in_between_audio.get("muzak"))
         floor_count = 12
@@ -72,8 +71,21 @@ class Controller:
         self.action = None
         self.lock = Lock()
         self.queue = deque()
+        self._emergency = Flavour(
+            constants.emergency_button_audio, self_interruptable=False
+        )
+        self._voicemail = Flavour(
+            constants.voicemail_button_audio, self_interruptable=False
+        )
+        self._no_press = Flavour(
+            constants.no_press_button_audio, self_interruptable=True
+        )
+        self._squeaker = Flavour(
+            constants.squeaker_button_audio, self_interruptable=True
+        )
         self.running = False
         self.gpio_init()
+        low_level.init()
 
     def gpio_init(self) -> None:
         """Initialize GPIO."""
@@ -124,7 +136,7 @@ class Controller:
         self.lock.release()
         return True
 
-    def floor(self, requested_floor: int) -> None:
+    def floor(self, requested_floor: int, gpio: int) -> None:
         """Run Handler for Floor GPIO."""
         if requested_floor >= len(self.floors):
             logger.error(f"requested_floor({requested_floor}) out of range")
@@ -133,23 +145,27 @@ class Controller:
         if not self._push_floor(floor):
             logger.error(f"Could not queue floor({requested_floor})")
 
-    def call_help(self, _: int) -> None:
+    def voicemail(self, _: int, gpio: int) -> None:
         """Run Call for Help Routine."""
+        self._voicemail.run()
         pass
 
-    def squeaker(self, _: int) -> None:
+    def squeaker(self, _: int, gpio: int) -> None:
         """Run Squeaker Routine."""
+        self._squeaker.run()
         pass
 
-    def emergency(self, _: int) -> None:
+    def emergency(self, _: int, gpio: int) -> None:
         """Run Emergency/Remain Calm Routine."""
+        self._emergency.run()
         pass
 
-    def no_press(self, _: int) -> None:
+    def no_press(self, _: int, gpio: int) -> None:
         """Run Don't Press This Button Routine."""
+        self._no_press.run()
         pass
 
-    def cancel(self, _: int) -> None:
+    def cancel(self, _: int, gpio: int) -> None:
         """
         Run Call Cancel Routine.
 
@@ -287,62 +303,19 @@ def control_door_close_callback(channel):
         low_level.door_close_led(on=False)
 
 
-def main2():
-    GPIO.setmode(GPIO.BCM)
-    GPIO.cleanup()
-
-    # Setup GPIO Inputs
-    GPIO.setup(
-        list(constants.gpio_to_floor_mapping.keys()), GPIO.IN, pull_up_down=GPIO.PUD_UP
+def main():
+    logging.basicConfig(
+        level=logging.DEBUG,
+        stream=sys.stdout,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-
-    # Setup GPIO Outputs
-    GPIO.setup(list(constants.control_outputs.values()), GPIO.OUT)
-
-    for i in constants.gpio_to_floor_mapping.keys():
-        GPIO.add_event_detect(
-            gpio=i, edge=GPIO.RISING, callback=floor_queue_callback, bouncetime=1000
-        )
-    GPIO.add_event_detect(
-        gpio=23, edge=GPIO.RISING, callback=control_help_callback, bouncetime=15000
-    )
-    GPIO.add_event_detect(
-        gpio=24, edge=GPIO.RISING, callback=control_door_close_callback, bouncetime=1000
-    )
-    GPIO.add_event_detect(
-        gpio=25, edge=GPIO.RISING, callback=control_emergency_callback, bouncetime=20000
-    )
-    GPIO.add_event_detect(
-        gpio=26, edge=GPIO.RISING, callback=control_door_open_callback, bouncetime=1000
-    )
-    GPIO.add_event_detect(
-        gpio=27, edge=GPIO.RISING, callback=control_cancel_callback, bouncetime=3000
-    )
-    low_level.init()
-
-
-    task_queue = queue.SimpleQueue()
-
-    floors = []
-    for i in range(12):
-        floors.append(Floor(i))
-
-    for _ in range(3):
+    floors = list(range(12))
+    for _ in range(2):
         f = random.choice(floors)  # noqa
         floors.remove(f)
-        if not f.is_queued:
-            f.push()
-            task_queue.put(Movement())
-            task_queue.put(f)
-
-    print("ready...")
-    time.sleep(5)
+        controller.floor(f)
     try:
-        while True:
-            if not task_queue.empty():
-                task = task_queue.get_nowait()
-                task.pop()
-            time.sleep(0.1)
+        controller.run()
     except KeyboardInterrupt:
         print("KeyboardInterrupt has been caught.")
         low_level.all_lights_off()
@@ -351,20 +324,8 @@ def main2():
         GPIO.cleanup()
 
 
-def main():
-    logging.basicConfig(
-        level=logging.DEBUG,
-        stream=sys.stdout
-    )
-    floors = list(range(12))
-    for _ in range(3):
-        f = random.choice(floors)
-        floors.remove(f)
-        controller.floor(f)
-    controller.run()
-
-
 controller = Controller()
+
 
 if __name__ == "__main__":
     main()

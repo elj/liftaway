@@ -4,7 +4,8 @@
 
 import logging
 import time
-from typing import Union
+from threading import BoundedSemaphore, Semaphore
+from typing import Dict, Union
 
 import liftaway.low_level
 from liftaway.audio import Music, Sound
@@ -124,7 +125,7 @@ class Floor(Base):
         self._close.play(blocking=True)
         if self._muzak:
             # TODO(tkalus) verify
-            #self._muzak.fadein()
+            # self._muzak.fadein()
             self._muzak.stop()
 
     def activate(self) -> None:
@@ -151,3 +152,33 @@ class Floor(Base):
         """Floor gets interrupted... noop for floors."""
         logger.info(f"Floor({self.floor_number}): Interrupted")
         pass
+
+
+class Flavour:
+    """Somebody call Guy Fieri!."""
+
+    def __init__(
+        self, sounds: Dict[str, Union[str, float]], self_interruptable: bool = True
+    ):
+        """Initialize."""
+        self.irqable = self_interruptable
+        if self.irqable:
+            self.sem = Semaphore(500)
+        else:
+            self.sem = BoundedSemaphore(1)
+        audios = []
+        for f in sounds:
+            audios.append(Sound(**f))
+        self._audios = tuple(audios)
+        self._audios_i = 0
+
+    def run(self):
+        """Welcome to Flavourtown."""
+        if not self.sem.acquire(blocking=False):
+            logger.error(f"Flavour: Already playing audio")
+            return
+        self._audios_i = (self._audios_i + 1) % len(self._audios)
+        logger.info(f"Flavour: Playing audio({self._audios_i})")
+        blocking = not self.irqable
+        self._audios[self._audios_i].play(blocking=blocking)
+        self.sem.release()

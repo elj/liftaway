@@ -59,10 +59,6 @@ in_between_audio = {
 }
 
 # Button A - Call for Help
-voicemail_button_intro = (
-    {"filename": "voice_vm_ringing.wav", "volume": 0.7, "audio_channel": "voicemail"},
-)
-
 voicemail_button_audio = tuple(
     {"filename": "voice_vm_dutch.wav", "volume": 0.6, "audio_channel": "voicemail"}
 )
