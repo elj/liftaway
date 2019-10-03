@@ -15,7 +15,7 @@ import liftaway.constants as constants
 import liftaway.low_level as low_level
 import RPi.GPIO as GPIO
 from liftaway.actions import Flavour, Floor, Movement
-from liftaway.audio import Music
+from liftaway.audio import init as audio_init, Music
 
 
 logger = logging.getLogger(__name__)
@@ -32,6 +32,7 @@ class Controller:
 
     def __init__(self):
         """Initializer."""
+        audio_init()
         gpio_inputs = [
             GPIOInput(gpio=v, bouncetime=1000, callback=partial(self.floor, k))
             for k, v in constants.floor_to_gpio_mapping.items()
@@ -94,9 +95,9 @@ class Controller:
         self._squeaker = Flavour(
             sounds=constants.squeaker_button_audio, self_interruptable=True
         )
-        self.running = False
         self.gpio_init()
         low_level.init()
+        self.running = False
 
     def gpio_init(self) -> None:
         """Initialize GPIO."""
