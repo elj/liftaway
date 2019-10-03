@@ -33,6 +33,36 @@ class Controller:
     def __init__(self):
         """Initializer."""
         audio_init()
+        self.movement = Movement()
+        self.muzak = Music(**constants.in_between_audio.get("muzak"))
+        self.muzak.play()
+        floor_count = 12
+        self.floors = [Floor(i, muzak=self.muzak) for i in range(floor_count)]
+        self.action = None
+        self.lock = Lock()
+        self.queue = deque()
+        self._emergency = Flavour(
+            sounds=constants.emergency_button_audio, self_interruptable=False
+        )
+        self._voicemail = Flavour(
+            sounds=constants.voicemail_button_audio, self_interruptable=False
+        )
+        self._no_press = Flavour(
+            sounds=constants.no_press_button_audio, self_interruptable=True
+        )
+        self._squeaker = Flavour(
+            sounds=constants.squeaker_button_audio, self_interruptable=True
+        )
+        self.gpio_init()
+        low_level.init()
+        self.running = False
+
+    def gpio_init(self) -> None:
+        """Initialize GPIO."""
+        GPIO.setmode(GPIO.BCM)
+        GPIO.cleanup()
+
+        # Setup GPIO Inputs
         gpio_inputs = [
             GPIOInput(gpio=v, bouncetime=1000, callback=partial(self.floor, k))
             for k, v in constants.floor_to_gpio_mapping.items()
@@ -72,45 +102,9 @@ class Controller:
                 callback=partial(self.voicemail, 0),
             )
         )
-        self.gpio_inputs = tuple(gpio_inputs)
-        self.gpio_outputs = (
-            GPIOOutput(gpio=v, label=k) for k, v in constants.control_outputs.items()
-        )
-        self.movement = Movement()
-        self.muzak = Music(**constants.in_between_audio.get("muzak"))
-        floor_count = 12
-        self.floors = [Floor(i, muzak=self.muzak) for i in range(floor_count)]
-        self.action = None
-        self.lock = Lock()
-        self.queue = deque()
-        self._emergency = Flavour(
-            sounds=constants.emergency_button_audio, self_interruptable=False
-        )
-        self._voicemail = Flavour(
-            sounds=constants.voicemail_button_audio, self_interruptable=False
-        )
-        self._no_press = Flavour(
-            sounds=constants.no_press_button_audio, self_interruptable=True
-        )
-        self._squeaker = Flavour(
-            sounds=constants.squeaker_button_audio, self_interruptable=True
-        )
-        self.gpio_init()
-        low_level.init()
-        self.running = False
+        gpio_inputs = tuple(gpio_inputs)
 
-    def gpio_init(self) -> None:
-        """Initialize GPIO."""
-        GPIO.setmode(GPIO.BCM)
-        GPIO.cleanup()
-
-        # Setup GPIO Outputs
-        for g in self.gpio_outputs:
-            logger.debug(f"Set GPIO_PIN({g.gpio}) as GPIO.OUT")
-            GPIO.setup(g.gpio, GPIO.OUT)
-
-        # Setup GPIO Inputs
-        for g in self.gpio_inputs:
+        for g in gpio_inputs:
             logger.debug(f"Set GPIO_PIN({g.gpio}) as GPIO.IN with PUD_UP")
             GPIO.setup(g.gpio, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             GPIO.add_event_detect(
@@ -119,6 +113,15 @@ class Controller:
                 callback=g.callback,
                 bouncetime=g.bouncetime,
             )
+
+        # Setup GPIO Outputs
+        gpio_outputs = tuple([  # noqa
+            GPIOOutput(gpio=v, label=k) for k, v in constants.control_outputs.items()
+        ])
+
+        for g in gpio_outputs:
+            logger.debug(f"Set GPIO_PIN({g.gpio}) as GPIO.OUT")
+            GPIO.setup(g.gpio, GPIO.OUT)
 
     def _pop_action(self) -> bool:
         """Pop Action (Movement or Floor) from Queue."""
