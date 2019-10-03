@@ -66,7 +66,7 @@ class Music:
         logger.debug(f"Fadeout Music {self.filename}")
         s_vol = self._music.get_volume()
         for i in range(10, -1, -1):
-            vol = ((s_vol) * i / 10)
+            vol = (s_vol) * i / 10
             self._music.set_volume(round(vol, 2))
             time.sleep(0.1)
 
@@ -87,9 +87,9 @@ class Music:
             self._music.stop()
 
     def zero(self):
+        """Zero out volume."""
         logger.debug(f"Kill Music {self.filename}")
         self._music.set_volume(0)
-
 
 
 class Sound:
@@ -183,6 +183,7 @@ class Sound:
 
 
 def init():
+    """Initialize Audio subsystem (pygame)."""
     pygame.mixer.pre_init(44100, -16, 2, 3072)  # setup mixer to avoid sound lag
     # (freq, bits, channels, buffer)
     pygame.init()  # initialize pygame - this is where terrible things happen
