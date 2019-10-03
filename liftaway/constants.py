@@ -17,9 +17,13 @@ floor_to_gpio_mapping = {
     10: 20,
     11: 21,
 }
-gpio_to_floor_mapping = {v: k for k, v in floor_to_gpio_mapping.items()}
-
-control_inputs = [23, 24, 25, 26, 27]
+flavor_to_gpio_mapping = {
+    "voicemail": 23,
+    "no_press": 24,
+    "emergency": 25,
+    "squeaker": 26,
+    "cancel": 27,
+}
 
 # RPi GPIO output pin to led mappings
 control_outputs = {
@@ -59,22 +63,22 @@ in_between_audio = {
 }
 
 # Button A - Call for Help
-voicemail_button_audio = tuple([
-    {"filename": "voice_vm_dutch.wav", "volume": 0.6, "audio_channel": "voicemail"}
+voicemail_button_audio = tuple([  # noqa
+    {"filename": "voice_vm_dutch.wav", "volume": 0.6, "audio_channel": "voicemail"},
 ])
 
 # Button B - Door Open
-squeaker_button_audio = tuple([
-    {"filename": "squeak2.wav", "volume": 0.3, "audio_channel": "squeaker"}
+squeaker_button_audio = tuple([  # noqa
+    {"filename": "squeak2.wav", "volume": 0.3, "audio_channel": "squeaker"},
 ])
 
 # Button C - Emergency
-emergency_button_audio = tuple([
-    {"filename": "emergency.wav", "volume": 0.8, "audio_channel": "emergency"}
+emergency_button_audio = tuple([  # noqa
+    {"filename": "emergency.wav", "volume": 0.8, "audio_channel": "emergency"},
 ])
 
 # Button D - Door Close
-no_press_button_audio = (
+no_press_button_audio = tuple([  # noqa
     {
         "filename": "voice_button_different.wav",
         "volume": 0.8,
@@ -103,4 +107,4 @@ no_press_button_audio = (
     },
     {"filename": "voice_button_stop.wav", "volume": 0.8, "audio_channel": "no_press"},
     {"filename": "voice_button_sure.wav", "volume": 0.8, "audio_channel": "no_press"},
-)
+])

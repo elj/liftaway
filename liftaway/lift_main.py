@@ -12,7 +12,6 @@ from threading import Lock
 from typing import Callable, NamedTuple
 
 import liftaway.constants as constants
-import liftaway.liftsound as liftsound
 import liftaway.low_level as low_level
 import RPi.GPIO as GPIO
 from liftaway.actions import Flavour, Floor, Movement
@@ -33,37 +32,49 @@ class Controller:
 
     def __init__(self):
         """Initializer."""
-        self.gpio_inputs = tuple([
-            GPIOInput(gpio=4, bouncetime=1000, callback=partial(self.floor, 1)),
-            GPIOInput(gpio=5, bouncetime=1000, callback=partial(self.floor, 2)),
-            GPIOInput(gpio=6, bouncetime=1000, callback=partial(self.floor, 3)),
-            GPIOInput(gpio=12, bouncetime=1000, callback=partial(self.floor, 4)),
-            GPIOInput(gpio=13, bouncetime=1000, callback=partial(self.floor, 5)),
-            GPIOInput(gpio=16, bouncetime=1000, callback=partial(self.floor, 6)),
-            GPIOInput(gpio=17, bouncetime=1000, callback=partial(self.floor, 7)),
-            GPIOInput(gpio=18, bouncetime=1000, callback=partial(self.floor, 8)),
-            GPIOInput(gpio=19, bouncetime=1000, callback=partial(self.floor, 9)),
-            GPIOInput(gpio=20, bouncetime=1000, callback=partial(self.floor, 10)),
-            GPIOInput(gpio=21, bouncetime=1000, callback=partial(self.floor, 11)),
-            GPIOInput(gpio=22, bouncetime=1000, callback=partial(self.floor, 0)),
-            GPIOInput(gpio=23, bouncetime=1000, callback=partial(self.voicemail, 0)),
-            GPIOInput(gpio=26, bouncetime=400, callback=partial(self.squeaker, 0)),
-            GPIOInput(gpio=25, bouncetime=1000, callback=partial(self.emergency, 0)),
-            GPIOInput(gpio=24, bouncetime=500, callback=partial(self.no_press, 0)),
-            GPIOInput(gpio=27, bouncetime=3000, callback=partial(self.cancel, 0)),
-        ])
-        # self.gpio_outputs = list([
-        #     GPIOOutput(gpio=7, label="nothing"),
-        #     GPIOOutput(gpio=8, label="door_close"),
-        #     GPIOOutput(gpio=9, label="door_open"),
-        #     GPIOOutput(gpio=10, label="cancel_call"),
-        #     GPIOOutput(gpio=11, label="emergency_call"),
-        #     GPIOOutput(gpio=14, label="direction_up"),
-        #     GPIOOutput(gpio=15, label="direction_dn"),
-        # ])
-        self.gpio_outputs = tuple([
+        gpio_inputs = [
+            GPIOInput(gpio=v, bouncetime=1000, callback=partial(self.floor, k))
+            for k, v in constants.floor_to_gpio_mapping.items()
+        ]
+        gpio_inputs.append(
+            GPIOInput(
+                gpio=constants.flavor_to_gpio_mapping.get("cancel"),
+                bouncetime=1000,
+                callback=partial(self.cancel, 0),
+            )
+        )
+        gpio_inputs.append(
+            GPIOInput(
+                gpio=constants.flavor_to_gpio_mapping.get("emergency"),
+                bouncetime=1000,
+                callback=partial(self.emergency, 0),
+            )
+        )
+        gpio_inputs.append(
+            GPIOInput(
+                gpio=constants.flavor_to_gpio_mapping.get("no_press"),
+                bouncetime=400,
+                callback=partial(self.no_press, 0),
+            )
+        )
+        gpio_inputs.append(
+            GPIOInput(
+                gpio=constants.flavor_to_gpio_mapping.get("squeaker"),
+                bouncetime=400,
+                callback=partial(self.squeaker, 0),
+            )
+        )
+        gpio_inputs.append(
+            GPIOInput(
+                gpio=constants.flavor_to_gpio_mapping.get("voicemail"),
+                bouncetime=1000,
+                callback=partial(self.voicemail, 0),
+            )
+        )
+        self.gpio_inputs = tuple(gpio_inputs)
+        self.gpio_outputs = (
             GPIOOutput(gpio=v, label=k) for k, v in constants.control_outputs.items()
-        ])
+        )
         self.movement = Movement()
         self.muzak = Music(**constants.in_between_audio.get("muzak"))
         floor_count = 12
@@ -177,6 +188,8 @@ class Controller:
         Dequeue's all selected motions and floors without playing them.
         """
         logger.debug(f"cancel({gpio})")
+        low_level.cancel_call_led(on=True)
+        self.interrupt()
 
     def run(self) -> None:
         """Run Controller."""
@@ -190,39 +203,15 @@ class Controller:
                     time.sleep(0.1)
                 self.muzak.play() or self.muzak.fadein()
             self.muzak.play() or self.muzak.fadein()
-            time.sleep(0.1)
+            while self._pop_action():
+                self.action.run(interrupted=True)
+            self.paused = False
 
     def interrupt(self) -> None:
         """Interrupt! (Call Cancel)."""
         self.paused = True
         if self.action:
             self.action.interrupt()
-        while self._pop_action():
-            self.action.run(intrrupted=True)
-        self.paused = False
-
-
-q = deque()
-
-
-def control_cancel_callback(channel):
-    global current_floor
-    if channel != 27:
-        return
-    # turn on the call cancel button light
-    low_level.cancel_call_led(on=True)
-    print("[queue] **Clearing floor queue!**")
-    # TODO: turn off all the floor button lights
-    global current_floor
-    liftsound.cancel_call_on(current_floor)
-    if q:
-        while q:
-            f = q.popleft()
-            print("[queue] ***removing floor ", f)
-            low_level.floor_button_led(f, on=False)
-            time.sleep(0.2)
-    current_floor = -1
-    low_level.cancel_call_led(on=False)
 
 
 def main():
