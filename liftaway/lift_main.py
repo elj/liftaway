@@ -116,10 +116,7 @@ class Controller:
 
         # Setup GPIO Outputs
         gpio_outputs = tuple(  # noqa
-            [
-                GPIOOutput(gpio=v, label=k)
-                for k, v in constants.control_outputs.items()
-            ]
+            [GPIOOutput(gpio=v, label=k) for k, v in constants.control_outputs.items()]
         )
 
         for g in gpio_outputs:
@@ -230,12 +227,13 @@ def main():
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
-    # Debug
-    floors = list(range(12))
-    for _ in range(2):
-        f = random.choice(floors)  # noqa
-        floors.remove(f)
-        controller.floor(f, 4)
+    # Debug -- Auto-queue two floors on startup
+    if False:
+        floors = list(range(len(constants.floor_audio)))
+        for _ in range(2):
+            f = random.choice(floors)  # noqa
+            floors.remove(f)
+            controller.floor(f, 4)
 
     try:
         controller.run()
