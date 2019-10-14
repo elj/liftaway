@@ -41,7 +41,7 @@ floor_audio = {
     0: ({"filename": "train.wav"},),
     1: ({"filename": "rocket.wav"},),
     2: ({"filename": "obnoxious_frogs.wav"},),
-    3: ({"filename": "Waves.wav"},),
+    3: ({"filename": "waves_2ch.wav"},),
     4: ({"filename": "popcorn.wav"},),
     5: ({"filename": "orchestra.wav"},),
     6: ({"filename": "baseball_2ch.wav"},),
