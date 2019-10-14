@@ -210,6 +210,7 @@ class Controller:
             self.muzak.play() or self.muzak.fadein()
             while self._pop_action():
                 self.action.run(interrupted=True)
+            low_level.direction_led(on=False)
             low_level.cancel_call_led(on=False)
             self.paused = False
 
