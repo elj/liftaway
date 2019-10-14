@@ -63,48 +63,62 @@ in_between_audio = {
 }
 
 # Button A - Call for Help
-voicemail_button_audio = tuple([  # noqa
-    {"filename": "voice_vm_dutch.wav", "volume": 0.6, "audio_channel": "voicemail"},
-])
+voicemail_button_audio = tuple(  # noqa
+    [{"filename": "voice_vm_dutch.wav", "volume": 0.6, "audio_channel": "voicemail"}]
+)
 
 # Button B - Door Open
-squeaker_button_audio = tuple([  # noqa
-    {"filename": "squeak2.wav", "volume": 0.3, "audio_channel": "squeaker"},
-])
+squeaker_button_audio = tuple(  # noqa
+    [{"filename": "squeak2.wav", "volume": 0.3, "audio_channel": "squeaker"}]
+)
 
 # Button C - Emergency
-emergency_button_audio = tuple([  # noqa
-    {"filename": "emergency.wav", "volume": 0.8, "audio_channel": "emergency"},
-])
+emergency_button_audio = tuple(  # noqa
+    [{"filename": "emergency.wav", "volume": 0.8, "audio_channel": "emergency"}]
+)
 
 # Button D - Door Close
-no_press_button_audio = tuple([  # noqa
-    {
-        "filename": "voice_button_different.wav",
-        "volume": 0.8,
-        "audio_channel": "no_press",
-    },
-    {
-        "filename": "voice_button_dontpress.wav",
-        "volume": 0.8,
-        "audio_channel": "no_press",
-    },
-    {"filename": "voice_button_mad.wav", "volume": 0.8, "audio_channel": "no_press"},
-    {
-        "filename": "voice_button_notlike.wav",
-        "volume": 0.8,
-        "audio_channel": "no_press",
-    },
-    {
-        "filename": "voice_button_notpressing.wav",
-        "volume": 0.8,
-        "audio_channel": "no_press",
-    },
-    {
-        "filename": "voice_button_outofservice.wav",
-        "volume": 0.8,
-        "audio_channel": "no_press",
-    },
-    {"filename": "voice_button_stop.wav", "volume": 0.8, "audio_channel": "no_press"},
-    {"filename": "voice_button_sure.wav", "volume": 0.8, "audio_channel": "no_press"},
-])
+no_press_button_audio = tuple(  # noqa
+    [
+        {
+            "filename": "voice_button_different.wav",
+            "volume": 0.8,
+            "audio_channel": "no_press",
+        },
+        {
+            "filename": "voice_button_dontpress.wav",
+            "volume": 0.8,
+            "audio_channel": "no_press",
+        },
+        {
+            "filename": "voice_button_mad.wav",
+            "volume": 0.8,
+            "audio_channel": "no_press",
+        },
+        {
+            "filename": "voice_button_notlike.wav",
+            "volume": 0.8,
+            "audio_channel": "no_press",
+        },
+        {
+            "filename": "voice_button_notpressing.wav",
+            "volume": 0.8,
+            "audio_channel": "no_press",
+        },
+        {
+            "filename": "voice_button_outofservice.wav",
+            "volume": 0.8,
+            "audio_channel": "no_press",
+        },
+        {
+            "filename": "voice_button_stop.wav",
+            "volume": 0.8,
+            "audio_channel": "no_press",
+        },
+        {
+            "filename": "voice_button_sure.wav",
+            "volume": 0.8,
+            "audio_channel": "no_press",
+        },
+    ]
+)

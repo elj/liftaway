@@ -4,7 +4,6 @@
 
 import logging
 import time
-from threading import BoundedSemaphore, Semaphore
 from typing import Dict, Tuple, Union
 
 import liftaway.low_level
@@ -150,7 +149,9 @@ class Flavour:
     """Somebody call Guy Fieri!."""
 
     def __init__(
-        self, sounds: Tuple[Dict[str, Union[str, float]]], self_interruptable: bool = True
+        self,
+        sounds: Tuple[Dict[str, Union[str, float]]],
+        self_interruptable: bool = True,
     ):
         """Initialize."""
         self.irqable = self_interruptable

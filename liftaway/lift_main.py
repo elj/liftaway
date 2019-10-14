@@ -115,9 +115,12 @@ class Controller:
             )
 
         # Setup GPIO Outputs
-        gpio_outputs = tuple([  # noqa
-            GPIOOutput(gpio=v, label=k) for k, v in constants.control_outputs.items()
-        ])
+        gpio_outputs = tuple(  # noqa
+            [
+                GPIOOutput(gpio=v, label=k)
+                for k, v in constants.control_outputs.items()
+            ]
+        )
 
         for g in gpio_outputs:
             logger.debug(f"Set GPIO_PIN({g.gpio}) as GPIO.OUT")
