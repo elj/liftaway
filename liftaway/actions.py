@@ -62,9 +62,6 @@ class Movement(Base):
             self.travel()
             # Randomize the travel time from 2 to 7 seconds
             # time.sleep(random.choice(tuple(range(2, 8))))  # noqa
-        else:
-            # Take some time to dequeue the floors
-            time.sleep(0.5)
 
     def interrupt(self) -> None:
         """Movement gets interrupted... stop audio and play screech."""
@@ -146,6 +143,9 @@ class Floor(Base):
             self.door_open()
             self.floor_sounds()
             self.door_close()
+        else:
+            # Take some time to dequeue the floors
+            time.sleep(0.2)
         self._queued = False
 
     def interrupt(self) -> None:
