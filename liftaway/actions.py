@@ -84,12 +84,6 @@ class Floor(Base):
         self._open = Sound(**in_between_audio.get("open"))
         self._close = Sound(**in_between_audio.get("close"))
         self._muzak = muzak
-        self._queued = False
-
-    @property
-    def is_queued(self) -> bool:
-        """Object thinks it's queued or not."""
-        return self._queued
 
     def ding(self) -> None:
         """Ding!."""
@@ -129,7 +123,6 @@ class Floor(Base):
         """Floor gets pushed onto the queue."""
         logger.info(f"Floor({self.floor_number}): Pushed onto queue")
         liftaway.low_level.floor_button_led(self.floor_number, on=True)
-        self._queued = True
 
     def run(self, interrupted: bool = False) -> None:
         """Floor gets popped off the queue."""
@@ -146,7 +139,6 @@ class Floor(Base):
         else:
             # Take some time to dequeue the floors
             time.sleep(0.2)
-        self._queued = False
 
     def interrupt(self) -> None:
         """Floor gets interrupted... noop for floors."""

@@ -140,7 +140,8 @@ class Controller:
             logger.debug("Could not get floor lock")
             return False
         # We have the mutex
-        if self.action == floor or floor in self.queue:
+        # Don't care if the floor is self.action, just re-queue
+        if floor in self.queue:
             logger.debug("Floor already in queue")
             # TODO(tkalus) Blink floor light?
             self.lock.release()
